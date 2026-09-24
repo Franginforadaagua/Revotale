@@ -1,0 +1,4 @@
+Setas = Mirar
+WASD = Movimentar
+Ctrl = Andar devagar
++ = Ficar invencivel
