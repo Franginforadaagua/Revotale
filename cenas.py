@@ -60,6 +60,24 @@ ARQUIVOS_CENAS = [
 
 ]
 
+CENAS_FINAIS = [
+    {
+        "Texto": "Impressionante, não pensei que teria tamanha bravura.",
+        "tremertexto": "off",
+        "tremerimagem": "off"
+    },
+    {
+        "Texto": "De fato seu nome será lembrado por muito tempo...",
+        "tremertexto": "off",
+        "tremerimagem": "off"
+    }
+]
+
+ARQUIVOS_CENAS_FINAIS = [
+    "assets/cenas/cena6.png",
+    "assets/cenas/cena6.png"
+]
+
 
 # ==================================================
 # CONFIGURAÇÕES
@@ -149,92 +167,139 @@ FORCA_TREMIDA_IMAGEM = 8
 # CARREGAR CENAS
 # ==================================================
 
-def carregar_cenas():
+def carregar_imagem_cena(arquivo):
+    try:
+        imagem_original = pygame.image.load(arquivo)
 
+        if imagem_original.get_alpha() is not None:
+            imagem_original = imagem_original.convert_alpha()
+        else:
+            imagem_original = imagem_original.convert()
+
+        imagem = pygame.transform.scale(
+            imagem_original,
+            (IMAGEM_LARGURA, IMAGEM_ALTURA)
+        )
+
+        corte_cima = max(
+            0,
+            min(CORTE_CIMA_PIXELS, imagem.get_height() - 1)
+        )
+        corte_baixo = max(
+            0,
+            min(
+                CORTE_BAIXO_PIXELS,
+                imagem.get_height() - corte_cima - 1
+            )
+        )
+        altura_cortada = (
+            imagem.get_height()
+            - corte_cima
+            - corte_baixo
+        )
+        return imagem.subsurface(
+            (0, corte_cima, imagem.get_width(), altura_cortada)
+        ).copy()
+
+    except pygame.error as erro:
+        print(f"ERRO ao carregar cena: {arquivo}")
+        print(erro)
+        return None
+
+
+def carregar_cenas():
     cenas = []
 
     for arquivo in ARQUIVOS_CENAS:
-
-        try:
-
-            # ======================================
-            # CARREGAR IMAGEM
-            # ======================================
-
-            imagem_original = pygame.image.load(
-                arquivo
-            )
-
-            # ======================================
-            # CONVERTER
-            # ======================================
-
-            if imagem_original.get_alpha() is not None:
-
-                imagem_original = (
-                    imagem_original.convert_alpha()
-                )
-
-            else:
-
-                imagem_original = (
-                    imagem_original.convert()
-                )
-
-            # ======================================
-            # AMPLIAR SEM SUAVIZAÇÃO
-            #
-            # NÃO usar smoothscale aqui.
-            #
-            # scale mantém os pixels mais nítidos.
-            # ======================================
-
-            imagem = pygame.transform.scale(
-                imagem_original,
-                (
-                    IMAGEM_LARGURA,
-                    IMAGEM_ALTURA
-                )
-            )
-
-            corte_cima = max(
-                0,
-                min(CORTE_CIMA_PIXELS, imagem.get_height() - 1)
-            )
-            corte_baixo = max(
-                0,
-                min(
-                    CORTE_BAIXO_PIXELS,
-                    imagem.get_height() - corte_cima - 1
-                )
-            )
-            altura_cortada = (
-                imagem.get_height()
-                - corte_cima
-                - corte_baixo
-            )
-            imagem = imagem.subsurface(
-                (
-                    0,
-                    corte_cima,
-                    imagem.get_width(),
-                    altura_cortada
-                )
-            ).copy()
-
-            cenas.append(
-                imagem
-            )
-
-        except pygame.error as erro:
-
-            print(
-                f"ERRO ao carregar cena: {arquivo}"
-            )
-
-            print(erro)
+        imagem = carregar_imagem_cena(arquivo)
+        if imagem is not None:
+            cenas.append(imagem)
 
     return cenas
+
+
+def mostrar_final(tela):
+    cena_final = carregar_imagem_cena("assets/cenas/cena6.png")
+    cena_fuga = carregar_imagem_cena("assets/cenas/Fuga.png")
+    if cena_final is None or cena_fuga is None:
+        return False
+
+    clock = pygame.time.Clock()
+    fonte = pygame.font.Font(None, TAMANHO_FONTE)
+    sobreposicao = pygame.Surface(tela.get_size())
+    mensagem = "fim de jogo"
+
+    def processar_eventos():
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                return False
+            if (
+                evento.type == pygame.KEYDOWN
+                and evento.key == pygame.K_ESCAPE
+            ):
+                return False
+        return True
+
+    def desenhar_quadro(imagem, texto="", alpha=0):
+        tela.fill((0, 0, 0))
+        desenhar_imagem(tela, imagem)
+        desenhar_texto(tela, texto, fonte)
+        if alpha > 0:
+            sobreposicao.fill((0, 0, 0))
+            sobreposicao.set_alpha(alpha)
+            tela.blit(sobreposicao, (0, 0))
+        pygame.display.flip()
+
+    def fazer_fade(imagem, alpha_inicial, alpha_final, texto=""):
+        inicio = pygame.time.get_ticks()
+        while True:
+            if not processar_eventos():
+                return False
+
+            progresso = min(
+                1.0,
+                (pygame.time.get_ticks() - inicio) / 2000
+            )
+            alpha = int(
+                alpha_inicial
+                + (alpha_final - alpha_inicial) * progresso
+            )
+            desenhar_quadro(imagem, texto, alpha)
+
+            if progresso >= 1.0:
+                return True
+            clock.tick(60)
+
+    desenhar_quadro(cena_final)
+    inicio = pygame.time.get_ticks()
+    while pygame.time.get_ticks() - inicio < 10000:
+        if not processar_eventos():
+            return False
+        desenhar_quadro(cena_final)
+        clock.tick(60)
+
+    if not fazer_fade(cena_final, 0, 255):
+        return False
+    if not fazer_fade(cena_fuga, 255, 0):
+        return False
+
+    inicio = pygame.time.get_ticks()
+    duracao_digitacao = len(mensagem) * 150
+    while True:
+        if not processar_eventos():
+            return False
+
+        elapsed = pygame.time.get_ticks() - inicio
+        letras = min(len(mensagem), elapsed // 150)
+        desenhar_quadro(cena_fuga, mensagem[:letras])
+        if elapsed >= duracao_digitacao + 2000:
+            break
+        clock.tick(60)
+
+    if not fazer_fade(cena_fuga, 0, 255, mensagem):
+        return False
+    desenhar_quadro(cena_fuga, mensagem, 255)
+    return True
 
 
 # ==================================================
@@ -570,7 +635,7 @@ def desenhar_imagem(
 # MOSTRAR CENAS
 # ==================================================
 
-def mostrar_cenas(tela):
+def mostrar_cenas(tela, configuracoes=None, arquivos=None):
 
     clock = pygame.time.Clock()
 
@@ -587,7 +652,13 @@ def mostrar_cenas(tela):
     # CARREGAR CENAS
     # ==============================================
 
-    cenas = carregar_cenas()
+    if configuracoes is None:
+        configuracoes = CENAS
+
+    if arquivos is None:
+        cenas = carregar_cenas()
+    else:
+        cenas = [carregar_imagem_cena(arquivo) for arquivo in arquivos]
 
     if len(cenas) == 0:
 
@@ -605,9 +676,9 @@ def mostrar_cenas(tela):
         # CONFIGURAÇÕES DA CENA
         # ==========================================
 
-        if indice < len(CENAS):
+        if indice < len(configuracoes):
 
-            configuracao = CENAS[indice]
+            configuracao = configuracoes[indice]
 
         else:
 
@@ -994,3 +1065,11 @@ def mostrar_cenas(tela):
     # ==================================================
 
     return True
+
+
+def mostrar_cena_final(tela):
+    return mostrar_cenas(
+        tela,
+        configuracoes=CENAS_FINAIS,
+        arquivos=ARQUIVOS_CENAS_FINAIS
+    )

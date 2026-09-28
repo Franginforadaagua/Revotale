@@ -62,10 +62,6 @@ class Interface:
         self.morta = False
         self.invencibilidade_secreta = False
 
-        self.som_morte = pygame.mixer.Sound(
-            "sfx/morte.wav"
-        )
-
         self.sprite_icone = self._preparar_sprite(
             self.sprite_icone
         )
@@ -136,7 +132,6 @@ class Interface:
                 game_over=True
             )
             self.morta = True
-            self.som_morte.play()
             return
 
         self._criar_sangue(
