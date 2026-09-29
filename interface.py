@@ -4,9 +4,7 @@ import random
 import pygame
 
 from config import (
-    ESCALA_BARRA_VIDA,
-    ESCALA_BARRA_STAMINA,
-    STAMINA_MAXIMA
+    ESCALA_BARRA_VIDA
 )
 from colisao import eh_parede
 
@@ -21,9 +19,6 @@ class Interface:
         self.vida = vida_maxima
 
         self.vida_maxima = vida_maxima
-
-        self.stamina = STAMINA_MAXIMA
-        self.stamina_maxima = STAMINA_MAXIMA
 
         self.fonte_vida = pygame.font.Font(
             None,
@@ -40,18 +35,6 @@ class Interface:
 
         self.sprite_meio = pygame.image.load(
             "assets/BarraVida/meio.png"
-        ).convert_alpha()
-
-        self.sprite_icone_stamina = pygame.image.load(
-            "assets/BarraStamina/Icone.png"
-        ).convert_alpha()
-
-        self.sprite_borda_stamina = pygame.image.load(
-            "assets/BarraStamina/borda.png"
-        ).convert_alpha()
-
-        self.sprite_meio_stamina = pygame.image.load(
-            "assets/BarraStamina/meio.png"
         ).convert_alpha()
 
         self.sprite_sangue3 = pygame.image.load(
@@ -72,21 +55,6 @@ class Interface:
 
         self.sprite_meio = self._preparar_sprite(
             self.sprite_meio
-        )
-
-        self.sprite_icone_stamina = self._preparar_sprite(
-            self.sprite_icone_stamina,
-            ESCALA_BARRA_STAMINA
-        )
-
-        self.sprite_borda_stamina = self._preparar_sprite(
-            self.sprite_borda_stamina,
-            ESCALA_BARRA_STAMINA
-        )
-
-        self.sprite_meio_stamina = self._preparar_sprite(
-            self.sprite_meio_stamina,
-            ESCALA_BARRA_STAMINA
         )
 
         self.inicio_barra = 10 * ESCALA_BARRA_VIDA
@@ -620,107 +588,3 @@ class Interface:
             )
         )
 
-    def desenhar_stamina(self, tela):
-        x = 20
-        y = 20 + self.sprite_icone.get_height() + 38
-        x_icone = x
-        x_barra = x_icone + self.sprite_icone_stamina.get_width()
-        x_barra += self.espaco_icone
-        x_barra -= 5
-        x_sprites = x_barra - 5
-        x_sprites -= 10
-        y_meio = y + (
-            self.sprite_icone_stamina.get_height()
-            - self.sprite_meio_stamina.get_height()
-        ) // 2
-        y_meio += 2
-        y_barra = y_meio + 3
-        y_borda = y + (
-            self.sprite_icone_stamina.get_height()
-            - self.sprite_borda_stamina.get_height()
-        ) // 2
-        y_borda += 2
-        segmentos = self.vida_maxima
-        largura_segmento = self.sprite_meio_stamina.get_width()
-        x_borda_vida = (
-            x
-            + self.sprite_icone.get_width()
-            + self.espaco_icone
-            - 5
-            - 5
-            - 10
-            + (self.vida_maxima - 1) * self.sprite_meio.get_width()
-            + 2
-        )
-        x_sprites = (
-            x_borda_vida
-            - (segmentos - 1) * largura_segmento
-            - 2
-        )
-        x_borda = x_borda_vida
-        largura_total = x_borda - x_sprites + 4
-        raio = self.altura_barra // 2
-
-        pygame.draw.rect(
-            tela,
-            (128, 128, 128),
-            (x_sprites, y_barra, largura_total, self.altura_barra),
-            border_radius=raio
-        )
-
-        largura_preenchida = int(
-            largura_total
-            * self.stamina
-            /
-            self.stamina_maxima
-        )
-
-        if largura_preenchida > 0:
-            self._desenhar_preenchimento_vida(
-                tela,
-                x_sprites,
-                y_barra,
-                largura_preenchida,
-                self.altura_barra,
-                raio,
-                (222, 211, 8)
-            )
-
-        for indice in range(segmentos):
-            largura_meio = largura_segmento
-            if indice == segmentos - 1:
-                largura_meio = 2
-            tela.blit(
-                self.sprite_meio_stamina,
-                (
-                    x_sprites + indice * largura_segmento,
-                    y_meio
-                ),
-                pygame.Rect(
-                    0,
-                    0,
-                    largura_meio,
-                    self.sprite_meio_stamina.get_height()
-                )
-            )
-
-        tela.blit(self.sprite_icone_stamina, (x_icone, y))
-        tela.blit(self.sprite_borda_stamina, (x_borda, y_borda))
-
-        texto = (
-            f"ST: "
-            f"{int(self.stamina)}/"
-            f"{self.stamina_maxima}"
-        )
-        imagem_texto = self.fonte_vida.render(
-            texto,
-            True,
-            (0, 0, 0)
-        )
-        tela.blit(
-            imagem_texto,
-            (
-                20,
-                y + self.sprite_icone_stamina.get_height() + 8
-            )
-        )

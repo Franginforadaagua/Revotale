@@ -5,8 +5,7 @@ from config import (
     VELOCIDADE,
     VELOCIDADE_CTRL,
     ACELERACAO,
-    DESACELERACAO,
-    STAMINA_MAXIMA
+    DESACELERACAO
 )
 
 from colisao import pode_andar
@@ -103,11 +102,9 @@ class Jogador:
             sprite.get_height()
         ) // 2
 
-        self.stamina = STAMINA_MAXIMA
         self.coracao = None
         self.usando_coracao = False
         self.tem_chave = False
-        self._ultimo_tempo_stamina = pygame.time.get_ticks()
 
     def definir_coracao(self, coracao):
         self.coracao = coracao
@@ -225,31 +222,13 @@ class Jogador:
 
         teclas = pygame.key.get_pressed()
 
-        agora = pygame.time.get_ticks()
-        delta_tempo = min(
-            (agora - self._ultimo_tempo_stamina) / 1000,
-            0.1
-        )
-        self._ultimo_tempo_stamina = agora
-
         ctrl_apertado = (
             teclas[pygame.K_LCTRL]
             or
             teclas[pygame.K_RCTRL]
         )
 
-        if ctrl_apertado and self.stamina > 0:
-            self.stamina = max(
-                0,
-                self.stamina - 5 * delta_tempo
-            )
-        elif not ctrl_apertado:
-            self.stamina = min(
-                STAMINA_MAXIMA,
-                self.stamina + delta_tempo
-            )
-
-        self.usando_coracao = ctrl_apertado and self.stamina > 0
+        self.usando_coracao = ctrl_apertado
 
         movendo = False
 

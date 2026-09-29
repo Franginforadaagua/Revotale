@@ -1265,11 +1265,6 @@ while rodando:
             tela_jogo
         )
 
-        interface.stamina = jogador.stamina
-        interface.desenhar_stamina(
-            tela_jogo
-        )
-
         gerenciador_bosses.desenhar_interface(
             tela_jogo
         )

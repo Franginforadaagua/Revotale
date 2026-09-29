@@ -3,6 +3,7 @@ import os
 import random
 
 import pygame
+import mapa
 
 from config import ALTURA, LARGURA, TAMANHO_TILE
 from colisao import eh_parede
@@ -1131,6 +1132,12 @@ class GerenciadorBosses:
         return rect.x
 
     def _colidiu_com_parede_item(self, rect):
+        if (
+            mapa.MAPA_ATUAL == 1
+            and rect.colliderect(mapa.obter_rect_porta())
+        ):
+            return True
+
         pontos = [
             (rect.left + 2, rect.top + 2),
             (rect.right - 2, rect.top + 2),
